@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: setup up down shell test help
+.PHONY: setup up down shell test help lint analyse quality
 
 SAIL := ./vendor/bin/sail
 
@@ -29,3 +29,11 @@ shell: ## Access Sail shell
 
 test: ## Run tests via Artisan
 	$(SAIL) artisan test
+
+lint: ## Run Laravel Pint to check code style
+	$(SAIL) bin pint --test
+
+analyse: ## Run PHPStan for static analysis
+	$(SAIL) bin phpstan analyse
+
+quality: lint analyse test ## Run lint, static analysis, and tests
