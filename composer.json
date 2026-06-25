@@ -54,6 +54,15 @@
             "@php artisan config:clear --ansi @no_additional_args",
             "@php artisan test"
         ],
+        "lint": "./vendor/bin/pint --ansi",
+        "lint:test": "./vendor/bin/pint --test --ansi",
+        "lint:dirty": "./vendor/bin/pint --dirty --ansi",
+        "analyse": "./vendor/bin/phpstan analyse",
+        "quality": [
+            "@lint:test",
+            "@analyse",
+            "@test"
+        ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"

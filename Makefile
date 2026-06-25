@@ -1,13 +1,14 @@
 .DEFAULT_GOAL := help
-.PHONY: setup up down shell test help lint analyse quality
+.PHONY: setup up down shell test help lint lint-test analyse quality
 
 SAIL := ./vendor/bin/sail
 
-help: ## Show this help message
-	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\nTargets:\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
+help: ## Show this help message and available targets
+	@printf "\033[33mUsage:\033[0m\n  make \033[32m<target>\033[0m\n\n\033[33mTargets:\033[0m\n"
+	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[32m%-15s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
-setup: ## Copy .env, install dependencies via Docker, generate key and migrate
-	cp .env.example .env
+setup: ## Initialize the project (env, deps, containers, keys, and migrations)
+	cp -n .env.example .env || true
 	docker run --rm \
 		-u "$$(id -u):$$(id -g)" \
 		-v "$$(pwd):/var/www/html" \
@@ -18,22 +19,25 @@ setup: ## Copy .env, install dependencies via Docker, generate key and migrate
 	$(SAIL) artisan key:generate
 	$(SAIL) artisan migrate
 
-up: ## Start Sail containers in background
+up: ## Start all Docker containers in detached mode
 	$(SAIL) up -d
 
-down: ## Stop Sail containers
+down: ## Stop and remove all Docker containers
 	$(SAIL) down
 
-shell: ## Access Sail shell
+shell: ## Open an interactive bash shell inside the application container
 	$(SAIL) shell
 
-test: ## Run tests via Artisan
+test: ## Execute the automated test suite
 	$(SAIL) artisan test
 
-lint: ## Run Laravel Pint to check code style
-	$(SAIL) bin pint --test
+lint: ## Fix code style issues automatically using Laravel Pint
+	$(SAIL) composer lint
 
-analyse: ## Run PHPStan for static analysis
-	$(SAIL) bin phpstan analyse
+lint-test: ## Check code style violations without applying fixes (dry-run)
+	$(SAIL) composer lint:test
 
-quality: lint analyse test ## Run lint, static analysis, and tests
+analyse: ## Perform static code analysis using PHPStan
+	$(SAIL) composer analyse
+
+quality: lint-test analyse test ## Run the full Quality Assurance suite (lint, analyse, test)
